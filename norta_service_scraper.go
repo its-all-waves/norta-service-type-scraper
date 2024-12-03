@@ -1,4 +1,4 @@
-package norta_service_type_scraper
+package main
 
 /*
 Scrape https://www.norta.com/rider-tools for service type (vehicle types).
@@ -129,12 +129,17 @@ func Scrape() []byte {
 	return vehicleTypesJson
 }
 
-func WriteJsonFile() error {
-	jsonBytes := Scrape()
+func Write(jsonBytes []byte) error {
 	err := os.WriteFile("./output/vehicle_types.json", jsonBytes, 0644)
 	if err != nil {
-		fmt.Println("ERROR: Could not write the json file to disk.")
+		fmt.Println("ERROR: Could not write the json file to disk.", err)
 		return err
 	}
 	return nil
+}
+
+func main() {
+	fmt.Println("hello")
+	result := Scrape()
+	Write(result)
 }

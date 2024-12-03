@@ -1,4 +1,4 @@
-module norta-service-type-scraper
+module norta_vehicle_types
 
 go 1.23.3
 

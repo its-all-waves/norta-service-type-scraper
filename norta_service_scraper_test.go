@@ -1,4 +1,4 @@
-package norta_service_type_scraper
+package norta_vehicle_types
 
 import (
 	"log"
