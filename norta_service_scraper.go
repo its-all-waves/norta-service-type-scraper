@@ -11,6 +11,8 @@ Types
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/gocolly/colly"
 )
@@ -22,10 +24,10 @@ func nortaGetBusRoutes() map[string]string {
 	busColl.UserAgent = userAgent
 
 	busColl.OnError(func(r *colly.Response, err error) {
-		fmt.Printf("Bus Route Error: %s", err)
+		log.Printf("Bus Route Error: %s", err)
 	})
 	busColl.OnResponse(func(r *colly.Response) {
-		fmt.Println("--- Bus routes response received. ---")
+		log.Println("--- Buses response received. ---")
 	})
 
 	var busRoutesComplete []map[string]string
@@ -42,7 +44,7 @@ func nortaGetBusRoutes() map[string]string {
 			busRoutes[route] = name
 		}
 
-		fmt.Println(busRoutes)
+		// log.Println(busRoutes)
 	})
 
 	busColl.Visit("https://www.norta.com/rider-tools")
@@ -54,10 +56,10 @@ func nortaGetStcarRoutes() map[string]string {
 	stcarColl := colly.NewCollector()
 	stcarColl.UserAgent = userAgent
 	stcarColl.OnError(func(r *colly.Response, err error) {
-		fmt.Printf("Streetcar Route Error: %s", err)
+		log.Printf("Streetcar Route Error: %s", err)
 	})
 	stcarColl.OnResponse(func(r *colly.Response) {
-		fmt.Println("--- Streetcar routes response received. ---")
+		log.Println("--- Streetcars response received. ---")
 	})
 
 	var stcarRoutesComplete []map[string]string
@@ -74,10 +76,65 @@ func nortaGetStcarRoutes() map[string]string {
 			stcarRoutes[route] = name
 		}
 
-		fmt.Println(stcarRoutes)
+		// log.Println(stcarRoutes)
 	})
 
 	stcarColl.Visit("https://www.norta.com/rider-tools")
 
 	return stcarRoutes
+}
+
+func Scrape() []byte {
+	buses := nortaGetBusRoutes()
+	stCars := nortaGetStcarRoutes()
+
+	/*
+		// starting point
+		buses = {
+			"103": "103 General Meyer Local",
+			"105": "105 Algiers Local"
+		}
+		streetcars = {
+			"12": "12 St. Charles Streetcar",
+			"46": "46 Rampart-Loyola Streetcar"
+		}
+		// goal
+		{
+		"3": { "type": "bus", "name": "3 Tulane - Elmwood" },
+		"8": { "type": "bus", "name": "8 St. Claude - Arabi" },
+		"12": { "type": "streetcar", "name": "12 St. Charles Streetcar" },
+		"46": { "type": "streetcar", "name": "46 Rampart-Loyola Streetcar" },
+		}
+	*/
+	vehicleTypes := make(map[string]map[string]string)
+
+	for rt, name := range buses {
+		vehicleTypes[rt] = map[string]string{
+			"type": "bus",
+			"name": name,
+		}
+	}
+	for rt, name := range stCars {
+		vehicleTypes[rt] = map[string]string{
+			"type": "streetcar",
+			"name": name,
+		}
+	}
+
+	vehicleTypesJson, err := json.Marshal(vehicleTypes)
+	if err != nil {
+		log.Panicln("ERROR: Could not marshal the map into JSON.")
+	}
+
+	return vehicleTypesJson
+}
+
+func WriteJsonFile() error {
+	jsonBytes := Scrape()
+	err := os.WriteFile("./output/vehicle_types.json", jsonBytes, 0644)
+	if err != nil {
+		fmt.Println("ERROR: Could not write the json file to disk.")
+		return err
+	}
+	return nil
 }
